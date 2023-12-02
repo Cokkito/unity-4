@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditorInternal;
 using UnityEngine;
 
 public class BallController : MonoBehaviour
@@ -11,6 +8,15 @@ public class BallController : MonoBehaviour
     private bool ignoreNextCollision;
     private Vector3 startPosition;
 
+    [HideInInspector]
+    public int perfectPass;
+
+    public float superSpeed = 8;
+
+    private bool isSuperSpeedActive;
+
+    private int perfectPassCount = 3;
+
     private void Start()
     {
         startPosition = transform.position;
@@ -20,17 +26,35 @@ public class BallController : MonoBehaviour
     {
         if (ignoreNextCollision) return;
 
-        DeathPart deathPart = collision.transform.GetComponent<DeathPart>();
-        if (deathPart)
+        if (isSuperSpeedActive && !collision.transform.GetComponent<GoalController>())
         {
-            GameManager.singleton.RestartLevel();
+            Destroy(collision.transform.parent.gameObject, 0.2f);
         }
+        else
+        {
+            DeathPart deathPart = collision.transform.GetComponent<DeathPart>();
+            if (deathPart)
+            {
+                GameManager.singleton.RestartLevel();
+            }
+        }    
 
         rb.velocity = Vector3.zero;
         rb.AddForce(Vector3.up*impulseForce, ForceMode.Impulse);
 
         ignoreNextCollision = true;
         Invoke("AllowNextCollision", 0.2f);
+
+        perfectPass = 0;
+        isSuperSpeedActive = false;
+    }
+
+    private void Update()
+    {
+        if (perfectPass>=perfectPassCount && !isSuperSpeedActive)
+        {
+            isSuperSpeedActive=true;
+        }
     }
 
     private void AllowNextCollision()
